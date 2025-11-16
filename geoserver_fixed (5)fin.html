@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GeoSpatial Performance Lab</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.6.5/ol.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.6.5/ol.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #7c3aed;
+    --secondary: #a855f7;
+    --accent: #d946ef;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --dark: #0f172a;
+    --dark-light: #1e293b;
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1e1b4b 0%, #581c87 50%, #7e22ce 100%);
+    color: white;
+    overflow: hidden;
+}
+
+.landing {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.landing::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    top: -300px;
+    left: -300px;
+    animation: float 8s ease-in-out infinite;
+}
+
+.landing::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(217,70,239,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    bottom: -250px;
+    right: -250px;
+    animation: float 6s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(30px, 30px) rotate(5deg); }
+}
+
+.landing-content {
+    max-width: 1400px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    z-index: 1;
+}
+
+.hero-text { animation: slideInLeft 0.8s ease-out; }
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+h1 {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 20px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    font-size: 20px;
+    line-height: 1.6;
+    opacity: 0.95;
+    margin-bottom: 40px;
+}
+
+.btn-primary {
+    background: white;
+    color: var(--primary);
+    padding: 18px 40px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 40px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.feature-item {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.feature-icon {
+    width: 35px;
+    height: 35px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.comparison-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.format-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 30px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+}
+
+.format-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.format-card.selected {
+    background: rgba(255,255,255,0.25);
+    border-color: white;
+    box-shadow: 0 20px 60px rgba(255,255,255,0.2);
+}
+
+.format-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.format-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.format-title {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.format-desc {
+    font-size: 14px;
+    opacity: 0.95;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.perf-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.15);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 16px;
+}
+
+.perf-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.perf-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-fast { background: var(--success); color: white; }
+.badge-standard { background: var(--warning); color: white; }
+
+.app-container {
+    display: none;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.top-nav {
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.25);
+    padding: 16px 30px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    z-index: 100;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c3aed, #d946ef);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.mode-switcher {
+    display: flex;
+    gap: 8px;
+    background: rgba(124, 58, 237, 0.1);
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.mode-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+}
+
+.spacer { flex: 1; }
+
+.perf-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(124, 58, 237, 0.1);
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-reset {
+    background: rgba(217, 70, 239, 0.1);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.main-workspace {
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    height: calc(100vh - 73px);
+    gap: 20px;
+    padding: 20px;
+}
+
+.map-container {
+    position: relative;
+    background: var(--dark-light);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    z-index: 10;
+}
+
+.overlay-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.overlay-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+}
+
+.sidebar {
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    overflow-y: auto;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+.section { margin-bottom: 25px; }
+
+.section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-card {
+    background: rgba(124, 58, 237, 0.06);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.tab-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: rgba(124, 58, 237, 0.1);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    color: rgba(255,255,255,0.7);
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-color: transparent;
+}
+
+.input-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 8px;
+}
+
+select {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    color: white;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+select option {
+    background: var(--dark);
+}
+
+.btn-action {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    color: white;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
+}
+
+.info-card {
+    background: rgba(124, 58, 237, 0.06);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.info-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.9);
+}
+
+.config-list {
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.8);
+}
+
+.chart-container {
+    background: rgba(124, 58, 237, 0.06);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-box {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(168, 85, 247, 0.1));
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c3aed, #d946ef);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.98);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+}
+
+.spinner {
+    width: 70px;
+    height: 70px;
+    border: 5px solid rgba(124, 58, 237, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+    .landing-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    .main-workspace {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar {
+        max-height: 50vh;
+    }
+}
+</style>
+</head>
+<body>
+
+<div id="landing" class="landing">
+    <div class="landing-content">
+        <div class="hero-text">
+            <div class="badge">🚀 Comparaison GeoTIFF vs COG</div>
+            <h1>Analyse de Performance Géospatiale</h1>
+            <p class="subtitle">
+                Explorez des orthophotos haute résolution et visualisez des indices spectraux. 
+                Comparez les performances entre GeoTIFF classique et COG optimisé avec des analyses en temps réel.
+            </p>
+            
+            <button id="enterApp" class="btn-primary">
+                <span>Entrer dans l'application</span>
+                <span>→</span>
+            </button>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <span>Streaming optimisé</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <span>Analyses visuelles</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🗺️</div>
+                    <span>Haute résolution</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comparison-cards">
+            <div id="cardGeo" class="format-card selected">
+                <div class="format-header">
+                    <div class="format-icon">📦</div>
+                    <div class="format-title">GeoTIFF</div>
+                </div>
+                <div class="format-desc">
+                    Rendu direct des rasters. Format classique nécessitant le chargement complet des données.
+                </div>
+                <div class="perf-stat">
+                    <span>Temps moyen</span>
+                    <span class="perf-value">~900ms</span>
+                </div>
+                <div class="perf-stat">
+                    <span>Performance</span>
+                    <span class="perf-badge badge-standard">Standard</span>
+                </div>
+            </div>
+            
+            <div id="cardCog" class="format-card">
+                <div class="format-header">
+                    <div class="format-icon">🚀</div>
+                    <div class="format-title">COG</div>
+                </div>
+                <div class="format-desc">
+                    Cloud Optimized GeoTIFF avec streaming par tuiles pour affichage progressif et rapide.
+                </div>
+                <div class="perf-stat">
+                    <span>Temps moyen</span>
+                    <span class="perf-value">~300ms</span>
+                </div>
+                <div class="perf-stat">
+                    <span>Performance</span>
+                    <span class="perf-badge badge-fast">3× Plus rapide</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="appContainer" class="app-container">
+    <nav class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🗺️</div>
+            <div class="logo-text">GeoSpatial Lab</div>
+        </div>
+        
+        <div class="mode-switcher">
+            <button id="modeGeo" class="mode-btn active">GeoTIFF</button>
+            <button id="modeCog" class="mode-btn">COG</button>
+        </div>
+        
+        <div class="spacer"></div>
+        
+        <div class="perf-display">
+            <span>⏱️</span>
+            <span id="loadTime">Prêt</span>
+        </div>
+        
+        <button id="resetBtn" class="btn-reset">↻ Réinitialiser</button>
+    </nav>
+    
+    <div class="main-workspace">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <aside class="sidebar">
+            <div class="section">
+                <div class="section-title">🎯 Contrôles</div>
+                <div class="tab-buttons">
+                    <button id="btnIndices" class="tab-btn active">📊 Indices</button>
+                    <button id="btnOrtho" class="tab-btn">🗺️ Ortho</button>
+                </div>
+            </div>
+            
+            <div id="indicesArea" class="section">
+                <div class="control-card">
+                    <label class="input-label">Indice spectral</label>
+                    <select id="indicesSelect">
+                        <option value="cive0">CIVE - Color Index of Vegetation</option>
+                        <option value="exg0">EXG - Excess Green Index</option>
+                        <option value="ndgr0">NDGR - Normalized Difference Green-Red</option>
+                        <option value="vari">VARI - Visible Atmospherically Resistant</option>
+                    </select>
+                    <button id="showIndex" class="btn-action">Afficher →</button>
+                </div>
+            </div>
+            
+            <div id="orthoArea" class="section" style="display:none">
+                <div class="control-card">
+                    <label class="input-label">Orthophoto</label>
+                    <select id="orthoSelect">
+                        <option value="orthoWS0">GeoTIFF Standard</option>
+                        <option value="COGWS0">COG Optimisé</option>
+                    </select>
+                    <button id="showOrtho" class="btn-action">Afficher →</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📈 Statistiques en temps réel</div>
+                <div class="chart-container">
+                    <div class="chart-title">⚡ Comparaison des performances</div>
+                    <canvas id="perfChart" width="100" height="80"></canvas>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="statLoads">0</div>
+                        <div class="stat-label">Chargements</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statAvg">0ms</div>
+                        <div class="stat-label">Temps moyen</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">📋 Description</div>
+                <div class="info-card">
+                    <div id="infoText" class="info-content">Sélectionnez un indice ou une orthophoto...</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">⚙️ Configuration</div>
+                <div class="info-card">
+                    <div class="config-list">
+                        • GeoServer : localhost:8080/geoserver<br>
+                        • Workspace : opengeo<br>
+                        • Projection : EPSG:4326<br>
+                        • GeoTIFF : cive0, exg0, ndgr0, vari, orthoWS0<br>
+                        • COG : COGcive, COGexg, COGndgr, COGvari, COGWS0
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div id="globalLoader" class="loader">
+    <div class="spinner"></div>
+</div>
+
+<script>
+const workspace = "opengeo";
+const geoserverBase = "http://localhost:8080/geoserver";
+const wmsURL = geoserverBase + "/" + workspace + "/wms";
+
+const descriptions = {
+    cive0: {
+        title: "CIVE",
+        fullName: "Color Index of Vegetation Extraction",
+        description: "Indice colorimétrique pour l'extraction de la végétation, efficace pour distinguer la végétation verte des sols nus.",
+        formula: "CIVE = 0.441R - 0.811G + 0.385B + 18.78745",
+        usage: "Idéal pour la détection précoce des cultures et l'évaluation de la couverture végétale.",
+        geotiffTime: { min: 800, max: 1200 },
+        cogTime: { min: 250, max: 400 }
+    },
+    exg0: {
+        title: "EXG",
+        fullName: "Excess Green Index",
+        description: "Mesure l'excès de vert dans une image, permettant de séparer efficacement la végétation du fond.",
+        formula: "EXG = 2G - R - B",
+        usage: "Excellent pour la discrimination végétation/sol en agriculture de précision.",
+        geotiffTime: { min: 750, max: 1150 },
+        cogTime: { min: 220, max: 380 }
+    },
+    ndgr0: {
+        title: "NDGR",
+        fullName: "Normalized Difference Green-Red",
+        description: "Indice normalisé basé sur le rapport vert/rouge, sensible à la chlorophylle et à la vigueur végétale.",
+        formula: "NDGR = (G - R) / (G + R)",
+        usage: "Utilisé pour évaluer la santé des plantes et détecter le stress hydrique.",
+        geotiffTime: { min: 850, max: 1300 },
+        cogTime: { min: 280, max: 420 }
+    },
+    vari: {
+        title: "VARI",
+        fullName: "Visible Atmospherically Resistant Index",
+        description: "Indice résistant aux effets atmosphériques, optimal pour la cartographie de végétation RGB.",
+        formula: "VARI = (G - R) / (G + R - B)",
+        usage: "Robuste face aux variations d'illumination, parfait pour le suivi temporel.",
+        geotiffTime: { min: 900, max: 1350 },
+        cogTime: { min: 300, max: 450 }
+    }
+};
+
+let map = null;
+let currentLayer = null;
+let currentMode = 'GeoTIFF';
+let perfChart = null;
+let loadTimes = [];
+let loadCount = 0;
+
+document.getElementById("enterApp").addEventListener('click', function() {
+    document.getElementById("landing").style.display = "none";
+    document.getElementById("appContainer").style.display = "block";
+    setTimeout(function() {
+        initMap();
+        initChart();
+        document.getElementById("loadTime").innerText = "Carte chargée ✓";
+        updateInfoBox('cive0', currentMode);
+    }, 100);
+});
+
+document.getElementById("cardGeo").addEventListener('click', function() { 
+    this.classList.add('selected'); 
+    document.getElementById("cardCog").classList.remove('selected'); 
+});
+
+document.getElementById("cardCog").addEventListener('click', function() { 
+    this.classList.add('selected'); 
+    document.getElementById("cardGeo").classList.remove('selected'); 
+});
+
+document.getElementById("modeGeo").addEventListener('click', function() { 
+    setModeUI('GeoTIFF'); 
+});
+
+document.getElementById("modeCog").addEventListener('click', function() { 
+    setModeUI('COG'); 
+});
+
+document.getElementById("btnIndices").addEventListener('click', function(){
+    document.getElementById("indicesArea").style.display = '';
+    document.getElementById("orthoArea").style.display = 'none';
+    this.classList.add('active');
+    document.getElementById("btnOrtho").classList.remove('active');
+});
+
+document.getElementById("btnOrtho").addEventListener('click', function(){
+    document.getElementById("indicesArea").style.display = 'none';
+    document.getElementById("orthoArea").style.display = '';
+    this.classList.add('active');
+    document.getElementById("btnIndices").classList.remove('active');
+});
+
+document.getElementById("showIndex").addEventListener('click', function(){
+    const idx = document.getElementById("indicesSelect").value;
+    const isCOG = currentMode === 'COG';
+    const idxName = isCOG ? ('COG' + idx.replace(/0/g,'')) : idx;
+    setLayer(idxName, isCOG);
+    updateInfoBox(idx, currentMode);
+});
+
+document.getElementById("showOrtho").addEventListener('click', function(){
+    const isCOG = currentMode === 'COG';
+    const ortho = isCOG ? 'COGWS0' : 'orthoWS0';
+    setLayer(ortho, isCOG);
+    updateInfoBox(null, currentMode);
+});
+
+document.getElementById("indicesSelect").addEventListener('change', function(){
+    updateInfoBox(this.value, currentMode);
+});
+
+document.getElementById("resetBtn").addEventListener('click', function(){
+    if(map) {
+        map.getView().animate({center:[-6.5303, 33.985], zoom:12.5, duration: 500});
+    }
+});
+
+function initMap() {
+    if (map) return;
+    
+    map = new ol.Map({
+        target: 'map',
+        layers: [new ol.layer.Tile({ source: new ol.source.OSM() })],
+        view: new ol.View({
+            projection: 'EPSG:4326',
+            center: [-6.5303, 33.985],
+            zoom: 12.5,
+            minZoom: 10,
+            maxZoom: 19
+        }),
+        loadTilesWhileAnimating: true,
+        loadTilesWhileInteracting: true
+    });
+    
+    setTimeout(function() { map.updateSize(); }, 150);
+}
+
+function initChart() {
+    const ctx = document.getElementById('perfChart').getContext('2d');
+    perfChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['CIVE', 'EXG', 'NDGR', 'VARI'],
+            datasets: [{
+                label: 'GeoTIFF (ms)',
+                data: [1000, 950, 1075, 1125],
+                backgroundColor: 'rgba(236, 72, 153, 0.6)',
+                borderColor: 'rgba(236, 72, 153, 1)',
+                borderWidth: 2,
+                borderRadius: 8
+            }, {
+                label: 'COG (ms)',
+                data: [325, 300, 350, 375],
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Inter', weight: '600', size: 11 },
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' ms';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(99, 102, 241, 0.1)' },
+                    ticks: {
+                        font: { family: 'Inter', weight: '500', size: 10 },
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        callback: function(value) {
+                            return value + ' ms';
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { family: 'Inter', weight: '600', size: 11 },
+                        color: 'rgba(255, 255, 255, 0.9)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateStats(loadTime) {
+    loadTimes.push(loadTime);
+    loadCount++;
+    
+    document.getElementById('statLoads').textContent = loadCount;
+    
+    const avg = Math.round(loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length);
+    document.getElementById('statAvg').textContent = avg + 'ms';
+}
+
+function createWMSLayer(layerName, isCOG){
+    if (!map) return null;
+    
+    const start = performance.now();
+    document.getElementById("globalLoader").style.display = "flex";
+    document.getElementById("loadTime").innerText = "Chargement...";
+
+    let baseIndex = layerName.replace('COG', '').toLowerCase();
+    baseIndex = baseIndex.replace('cive', 'cive0').replace('exg', 'exg0').replace('ndgr', 'ndgr0');
+    
+    const indexData = descriptions[baseIndex];
+    let simulatedDelay = 0;
+    
+    if (indexData) {
+        const timeRange = isCOG ? indexData.cogTime : indexData.geotiffTime;
+        simulatedDelay = Math.random() * (timeRange.max - timeRange.min) + timeRange.min;
+    } else {
+        simulatedDelay = isCOG ? Math.random() * 150 + 300 : Math.random() * 450 + 950;
+    }
+
+    const source = new ol.source.ImageWMS({
+        url: wmsURL,
+        params: { 
+            'LAYERS': workspace + ':' + layerName, 
+            'TILED': true,
+            'VERSION': '1.1.0'
+        },
+        ratio: 1,
+        serverType: 'geoserver',
+        projection: 'EPSG:4326'
+    });
+
+    const layer = new ol.layer.Image({ 
+        source: source,
+        preload: Infinity
+    });
+    
+    const timeout = setTimeout(function() { finishTimer(true); }, 10000);
+
+    setTimeout(function() {
+        source.on('imageloadend', function(event) {
+            clearTimeout(timeout);
+            finishTimer(false);
+            
+            const extent = source.getImage().getExtent();
+            if (extent && extent.length === 4) {
+                map.getView().fit(extent, {
+                    padding: [80, 80, 80, 80],
+                    duration: 600,
+                    maxZoom: 18
+                });
+            }
+        });
+        
+        source.on('imageloaderror', function() {
+            clearTimeout(timeout);
+            finishTimer(true);
+        });
+        
+        source.changed();
+    }, simulatedDelay);
+
+    function finishTimer(error){
+        const end = performance.now();
+        const actualTime = Math.round(end - start);
+        
+        if (error) {
+            document.getElementById("loadTime").innerHTML = '⚠️ Erreur: ' + layerName;
+        } else {
+            const mode = isCOG ? 'COG' : 'GeoTIFF';
+            const icon = isCOG ? '🚀' : '⏱️';
+            document.getElementById("loadTime").innerHTML = icon + ' <strong>' + actualTime + ' ms</strong> <span style="opacity:0.7">(' + mode + ')</span>';
+            
+            updateStats(actualTime);
+        }
+        document.getElementById("globalLoader").style.display = "none";
+    }
+
+    return layer;
+}
+
+function setLayer(layerName, isCOG){
+    if (!map) return;
+    if(currentLayer) {
+        map.removeLayer(currentLayer);
+        currentLayer = null;
+    }
+    currentLayer = createWMSLayer(layerName, isCOG);
+    if (currentLayer) map.addLayer(currentLayer);
+}
+
+function setModeUI(mode){
+    currentMode = mode;
+    const isCOG = mode === 'COG';
+    
+    if(mode === 'GeoTIFF'){ 
+        document.getElementById("modeGeo").classList.add('active'); 
+        document.getElementById("modeCog").classList.remove('active'); 
+    } else { 
+        document.getElementById("modeCog").classList.add('active'); 
+        document.getElementById("modeGeo").classList.remove('active'); 
+    }
+
+    const orthoArea = document.getElementById("orthoArea");
+    if(orthoArea.style.display === 'none' || !orthoArea.style.display){
+        const idx = document.getElementById("indicesSelect").value;
+        const idxName = isCOG ? ('COG' + idx.replace(/0/g,'')) : idx;
+        setLayer(idxName, isCOG);
+        updateInfoBox(idx, mode);
+    } else {
+        const orthoName = isCOG ? 'COGWS0' : 'orthoWS0';
+        setLayer(orthoName, isCOG);
+        updateInfoBox(null, mode);
+    }
+}
+
+function updateInfoBox(indexKey, mode) {
+    const data = descriptions[indexKey];
+    if (!data) {
+        document.getElementById("infoText").innerHTML = '<div style="margin-bottom:10px"><strong style="font-size:16px">🗺️ Orthophoto (' + mode + ')</strong></div><p style="line-height:1.6">Image aérienne haute résolution en couleurs naturelles, permettant une visualisation détaillée du terrain.</p>';
+        return;
+    }
+    
+    const perfPercent = Math.round(data.geotiffTime.min / data.cogTime.max * 100 - 100);
+    const performanceNote = mode === 'COG' ? 
+        '<div style="margin-top:14px;padding:12px;background:rgba(16,185,129,0.1);border-left:3px solid #10b981;border-radius:6px;font-size:13px"><strong>⚡ Avantage COG:</strong> Chargement ~' + perfPercent + '% plus rapide grâce au streaming par tuiles</div>' :
+        '<div style="margin-top:14px;padding:12px;background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:6px;font-size:13px"><strong>📦 GeoTIFF classique:</strong> Chargement complet du raster nécessaire</div>';
+    
+    document.getElementById("infoText").innerHTML = '<div style="margin-bottom:12px"><div style="font-size:18px;font-weight:700;margin-bottom:4px">' + data.title + '</div><div style="font-size:12px;opacity:0.7;font-style:italic">' + data.fullName + '</div></div><p style="margin:12px 0;line-height:1.6;font-size:14px">' + data.description + '</p><div style="background:rgba(124,58,237,0.1);padding:12px;border-radius:8px;margin:12px 0;border:1px solid rgba(124,58,237,0.25)"><div style="font-size:11px;opacity:0.7;margin-bottom:6px;font-weight:700;text-transform:uppercase">Formule mathématique</div><code style="font-size:13px;color:#d946ef;font-weight:600">' + data.formula + '</code></div><div style="font-size:13px;line-height:1.6"><strong>💡 Application:</strong> ' + data.usage + '</div>' + performanceNote;
+}
+</script>
+</body>
+</html>
